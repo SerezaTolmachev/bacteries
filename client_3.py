@@ -1,9 +1,64 @@
 import socket
+import tkinter as tk
+from tkinter import ttk
+import tkinter.messagebox
 import pygame
 import math
 import sys
 import time
 
+name = ''
+color = ''
+
+root = tk.Tk()
+root.title('login')
+root.geometry('300x200')
+style = ttk.Style()
+print(style.theme_names())
+style.theme_use('clam')
+colors = ['Maroon', 'DarkRed', 'FireBrick', 'Red', 'Salmon', 'Tomato', 'Coral', 'OrangeRed', 'Chocolate', 'SandyBrown',
+          'DarkOrange', 'Orange', 'DarkGoldenrod', 'Goldenrod', 'Gold', 'Olive', 'Yellow', 'YellowGreen', 'GreenYellow',
+          'Chartreuse', 'LawnGreen', 'Green', 'Lime', 'Lime Green', 'SpringGreen', 'MediumSpringGreen', 'Turquoise',
+          'LightSeaGreen', 'MediumTurquoise', 'Teal', 'DarkCyan', 'Aqua', 'Cyan', 'Dark Turquoise', 'DeepSkyBlue',
+          'DodgerBlue', 'RoyalBlue', 'Navy', 'DarkBlue', 'MediumBlue.']
+
+
+def f1(event):
+    global color
+    color = combo.get()
+    style.configure('TCombobox', fieldbackground=color, background=color)
+
+def login():
+    global name
+    name = entry.get()
+    if name != '' and color != '':
+        root.destroy()
+        root.quit()
+    else:
+        tk.messagebox.showerror('Error', 'Вы не ввели имя иди цвет.')
+
+label1 = tk.Label(text='Введите никнейм')
+label1.pack()
+
+entry = tk.Entry(width=25)
+entry.pack()
+
+label2 = tk.Label(text='Выберите цвет')
+label2.pack()
+
+combo = ttk.Combobox(values=colors)
+combo.pack()
+
+combo.bind("<<ComboboxSelected>>", f1)
+
+button = tk.Button(text="Войти", command=login)
+button.pack()
+
+
+
+
+
+root.mainloop()
 
 WIDTH = 500
 HEIGHT = 500
@@ -12,6 +67,7 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
 client_socket.connect(('localhost', 10000))
+client_socket.send(f'color:<{name}, {color}>'.encode())
 
 pygame.init()
 
@@ -19,7 +75,7 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Бактерии')
 
 font = pygame.font.Font(None, 20)
-text = font.render("Player", True, 'white')
+text = font.render(name, True, 'white')
 place = text.get_rect(center=(250, 250))
 
 
@@ -59,7 +115,7 @@ while run:
     #client_socket.send('test'.encode())
 
     screen.fill("white")
-    pygame.draw.circle(screen, 'black', CENTER, radius)
+    pygame.draw.circle(screen, color, CENTER, radius)
     screen.blit(text, place)
     pygame.display.flip()
     pygame.display.update()

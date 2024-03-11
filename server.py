@@ -52,6 +52,7 @@ class Player(Base):
     abs_speed = Column(Integer, default=1)
     speed_x = Column(Integer, default=0)
     speed_y = Column(Integer, default=0)
+    color = Column(String(250))
 
     def __init__(self, name, address):
         self.name = name
@@ -60,6 +61,7 @@ class Player(Base):
 
 class LocalPlayer:
     def __init__(self, id, name, sock, addr):
+        #self.color = color
         self.id = id
         self.db: Player = session.get(Player, self.id)
         self.sock = sock
@@ -125,6 +127,7 @@ while run:
     for id in list(players):
         try:
             data = players[id].sock.recv(1024).decode()
+            print(data)
             players[id].change_speed(data)
         except:
             pass
