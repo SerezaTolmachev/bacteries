@@ -20,7 +20,7 @@ colors = ['Maroon', 'DarkRed', 'FireBrick', 'Red', 'Salmon', 'Tomato', 'Coral', 
           'DarkOrange', 'Orange', 'DarkGoldenrod', 'Goldenrod', 'Gold', 'Olive', 'Yellow', 'YellowGreen', 'GreenYellow',
           'Chartreuse', 'LawnGreen', 'Green', 'Lime', 'Lime Green', 'SpringGreen', 'MediumSpringGreen', 'Turquoise',
           'LightSeaGreen', 'MediumTurquoise', 'Teal', 'DarkCyan', 'Aqua', 'Cyan', 'Dark Turquoise', 'DeepSkyBlue',
-          'DodgerBlue', 'RoyalBlue', 'Navy', 'DarkBlue', 'MediumBlue.']
+          'DodgerBlue', 'RoyalBlue', 'Navy', 'DarkBlue', 'MediumBlue']
 
 
 def f1(event):
@@ -55,6 +55,27 @@ button = tk.Button(text="Войти", command=login)
 button.pack()
 
 
+def players_filter(players):
+    a = None
+    b = None
+    for i in range(len(players)):
+        if players[i] == '<':
+            a = i
+        if players[i] == '>' and a is not None:
+            b = i
+            result = players[a + 1:b]
+            #result = result.split()
+            return result
+    return ''
+
+def draw_players(players):
+    for i in range(len(players)):
+        player = players[i].split()
+        x = int(player[0])+CENTER[0]
+        y = int(player[1])+CENTER[1]
+        size = int(player[2])
+        color = player[3]
+        pygame.draw.circle(screen, color, (x, y), size)
 
 
 
@@ -67,7 +88,7 @@ client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client_socket.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
 
 client_socket.connect(('localhost', 10000))
-client_socket.send(f'color:<{name}, {color}>'.encode())
+client_socket.send(f'color:<{name},{color}>'.encode())
 
 pygame.init()
 
@@ -81,7 +102,7 @@ place = text.get_rect(center=(250, 250))
 
 
 
-radius = 25
+radius = 50
 CENTER = WIDTH//2, HEIGHT//2
 
 vector2 = 0, 0
@@ -108,8 +129,9 @@ while run:
             client_socket.send(f_vector.encode())
 
 
-    #data = client_socket.recv(1024).decode()
-    #print(data)
+    data = client_socket.recv(1024).decode()
+    data = players_filter(data).split(',')
+
 
 
     #client_socket.send('test'.encode())
@@ -117,6 +139,8 @@ while run:
     screen.fill("white")
     pygame.draw.circle(screen, color, CENTER, radius)
     screen.blit(text, place)
+    if data != ['']:
+        draw_players(data)
     pygame.display.flip()
     pygame.display.update()
 
