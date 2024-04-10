@@ -42,9 +42,16 @@ players = {}
 
 COLORS = ['Maroon', 'DarkRed', 'FireBrick', 'Red', 'Salmon', 'Tomato', 'Coral', 'OrangeRed', 'Chocolate', 'SandyBrown',
           'DarkOrange', 'Orange', 'DarkGoldenrod', 'Goldenrod', 'Gold', 'Olive', 'Yellow', 'YellowGreen', 'GreenYellow',
-          'Chartreuse', 'LawnGreen', 'Green', 'Lime', 'Lime Green', 'SpringGreen', 'MediumSpringGreen', 'Turquoise',
-          'LightSeaGreen', 'MediumTurquoise', 'Teal', 'DarkCyan', 'Aqua', 'Cyan', 'Dark Turquoise', 'DeepSkyBlue',
+          'Chartreuse', 'LawnGreen', 'Green', 'Lime', 'LimeGreen', 'SpringGreen', 'MediumSpringGreen', 'Turquoise',
+          'LightSeaGreen', 'MediumTurquoise', 'Teal', 'DarkCyan', 'Aqua', 'Cyan', 'DarkTurquoise', 'DeepSkyBlue',
           'DodgerBlue', 'RoyalBlue', 'Navy', 'DarkBlue', 'MediumBlue']
+
+class Food:
+    def __init__(self, x, y, size, color):
+        self.x = x
+        self.y = y
+        self.color = color
+        self.size = size
 
 
 class Player(Base):
@@ -144,6 +151,10 @@ class LocalPlayer:
         self.y_vision = self.db.y_vision
         return self
 
+    def scale_speed(self):
+        self.abs_speed = 10 / math.sqrt(self.size)
+
+
 run = True
 
 
@@ -176,10 +187,12 @@ def color_filter(vector):
     return ''
 
 
+
 bots = 30
+food_size = 15
+food_count = 250
 bot_name = RussianNames(count=bots*3, patronymic=False, surname=False, rare=True)
 bot_name = list(set(bot_name))
-print(bot_name)
 for i in range(bots):
     bot = Player(bot_name[i], None)
     bot.color = random.choice(COLORS)
@@ -192,6 +205,11 @@ for i in range(bots):
     session.commit()
     local_bot = LocalPlayer(bot.id, bot.name, None, None, bot.color).load()
     players[bot.id] = local_bot
+
+foods = []
+for i in range(food_count):
+    food = Food(x=random.randint(0, WIDTH_GAME), y=random.randint(0, HEIGHT_GAME), size=food_size, color=random.choice(COLORS))
+    foods.append(food)
 
 tick = -1
 
@@ -216,8 +234,19 @@ while run:
             players[user.id] = local_player
     except BlockingIOError:
         pass
+    # Спавн недостающих ботов
+
+    if len(foods) > 0:
+        pass
+    # Спавн недостающей еды
+    need_food = food_count - len(foods)
+    for i in range(need_food):
+        food = Food(x=random.randint(0, WIDTH_GAME), y=random.randint(0, HEIGHT_GAME), size=food_size,
+                    color=random.choice(COLORS))
+        foods.append(food)
 
     for id in list(players):
+
         if players[id].sock != None:
             try:
                 data = players[id].sock.recv(1024).decode()
@@ -226,6 +255,7 @@ while run:
             except:
                 pass
         else:
+
             if tick % 300 == 0:
                 vector = f"<{random.randint(-1, 1)},{random.randint(-1, 1)}>"
                 players[id].change_speed(vector)
@@ -237,33 +267,64 @@ while run:
 
     pairs = list(players.items())
     for i in range(len(pairs)):
+        # Цикл для обхода еды
+        for food in foods:
+            hero = pairs[i][1]
+            dist_x = round(abs(hero.x - food.x))
+            dist_y = round(abs(hero.y - food.y))
+
+            if dist_x <= hero.x_vision // 2 + food.size and dist_y <= hero.y_vision // 2 + food.size:
+                dist_2 = math.sqrt(dist_x ** 2 + dist_y ** 2)
+                # Поглощение еды
+
+                if dist_2 < hero.size:
+                    hero.size = round(math.sqrt(hero.size**2 + food.size**2))
+                    hero.scale_speed()
+                    food.size = 0
+                    foods.remove(food)
+
+                if hero.sock != None and food.size != 0:
+                    data_2 = f"{dist_x} {dist_y} {food.size} {food.color}"
+                    visible_players[hero.id].append(data_2)
         for j in range(i+1, len(pairs)):
             player1 = pairs[i][1]
             player2 = pairs[j][1]
             dist_x = round(abs(player2.x - player1.x))
             dist_y = round(abs(player2.y - player1.y))
+
             if dist_x <= player1.x_vision//2+player2.size and dist_y <= player1.y_vision//2+player2.size:
                 data = f"{dist_x} {dist_y} {player2.size} {player2.color}"
                 visible_players[player1.id].append(data)
                 dist = math.sqrt(dist_x**2+dist_y**2)
+
                 if dist < player1.size and player1.size > player2.size*1.1:
+                    player1.size = round(math.sqrt(player1.size ** 2 + player2.size ** 2))
+                    player1.scale_speed()
                     player2.size = 0
                     player2.speed_x = 0
                     player2.speed_y = 0
+
             if dist_x <= player2.x_vision//2+player1.size and dist_y <= player2.y_vision//2+player1.size:
                 data = f"{-dist_x} {-dist_y} {player1.size} {player1.color}"
                 visible_players[player2.id].append(data)
                 dist = math.sqrt(dist_x ** 2 + dist_y ** 2)
+
                 if dist < player2.size and player2.size > player1.size*1.1:
+                    player2.size = round(math.sqrt(player2.size ** 2 + player1.size ** 2))
+                    player2.scale_speed()
                     player1.size = 0
                     player1.speed_x = 0
                     player1.speed_y = 0
     for id in list(players):
+
         if players[id].sock != None:
+            radius = str(players[id].size)
+            visible_players[id] = [radius]+visible_players[id]
             visible_players[id] = '<'+','.join(visible_players[id]) + '>'
             print(visible_players[id])
 
     for id in list(players):
+
         if players[id].sock != None:
             try:
                 players[id].sock.send(visible_players[id].encode())
@@ -276,7 +337,9 @@ while run:
                 session.commit()
                 print('Cокет закрыт.')
     for id in list(players):
+
         if players[id].size == 0:
+
             if players[id].sock != None:
                 players[id].sock.close()
             session.query(Player).filter(Player.id == id).delete()
@@ -284,6 +347,7 @@ while run:
             del players[id]
             print('...')
     for event in pygame.event.get():
+
         if event == pygame.QUIT:
             print(1)
             run = False

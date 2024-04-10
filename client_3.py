@@ -18,8 +18,8 @@ print(style.theme_names())
 style.theme_use('clam')
 colors = ['Maroon', 'DarkRed', 'FireBrick', 'Red', 'Salmon', 'Tomato', 'Coral', 'OrangeRed', 'Chocolate', 'SandyBrown',
           'DarkOrange', 'Orange', 'DarkGoldenrod', 'Goldenrod', 'Gold', 'Olive', 'Yellow', 'YellowGreen', 'GreenYellow',
-          'Chartreuse', 'LawnGreen', 'Green', 'Lime', 'Lime Green', 'SpringGreen', 'MediumSpringGreen', 'Turquoise',
-          'LightSeaGreen', 'MediumTurquoise', 'Teal', 'DarkCyan', 'Aqua', 'Cyan', 'Dark Turquoise', 'DeepSkyBlue',
+          'Chartreuse', 'LawnGreen', 'Green', 'Lime', 'LimeGreen', 'SpringGreen', 'MediumSpringGreen', 'Turquoise',
+          'LightSeaGreen', 'MediumTurquoise', 'Teal', 'DarkCyan', 'Aqua', 'Cyan', 'DarkTurquoise', 'DeepSkyBlue',
           'DodgerBlue', 'RoyalBlue', 'Navy', 'DarkBlue', 'MediumBlue']
 
 
@@ -75,6 +75,7 @@ def draw_players(players):
         y = int(player[1])+CENTER[1]
         size = int(player[2])
         color = player[3]
+        print(color)
         pygame.draw.circle(screen, color, (x, y), size)
 
 
@@ -102,7 +103,7 @@ place = text.get_rect(center=(250, 250))
 
 
 
-radius = 50
+radius = 25
 CENTER = WIDTH//2, HEIGHT//2
 
 vector2 = 0, 0
@@ -140,7 +141,8 @@ while run:
     pygame.draw.circle(screen, color, CENTER, radius)
     screen.blit(text, place)
     if data != ['']:
-        draw_players(data)
+        radius = int(data[0])
+        draw_players(data[1:])
     pygame.display.flip()
     pygame.display.update()
 
