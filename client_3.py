@@ -14,7 +14,6 @@ root = tk.Tk()
 root.title('login')
 root.geometry('300x200')
 style = ttk.Style()
-print(style.theme_names())
 style.theme_use('clam')
 colors = ['Maroon', 'DarkRed', 'FireBrick', 'Red', 'Salmon', 'Tomato', 'Coral', 'OrangeRed', 'Chocolate', 'SandyBrown',
           'DarkOrange', 'Orange', 'DarkGoldenrod', 'Goldenrod', 'Gold', 'Olive', 'Yellow', 'YellowGreen', 'GreenYellow',
@@ -75,8 +74,12 @@ def draw_players(players):
         y = int(player[1])+CENTER[1]
         size = int(player[2])
         color = player[3]
-        print(color)
         pygame.draw.circle(screen, color, (x, y), size)
+        if len(player) > 4:
+            name = player[4]
+            text = font.render(name, True, 'white')
+            place = text.get_rect(center=(x, y))
+            screen.blit(text, place)
 
 
 

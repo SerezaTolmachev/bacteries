@@ -188,6 +188,7 @@ def color_filter(vector):
 
 
 
+
 bots = 30
 food_size = 15
 food_count = 250
@@ -198,8 +199,8 @@ for i in range(bots):
     bot.color = random.choice(COLORS)
     bot.x = random.randint(0, WIDTH_GAME)
     bot.y = random.randint(0, HEIGHT_GAME)
-    bot.speed_x = random.randint(-1 , 1)
-    bot.speed_y = random.randint(-1 , 1)
+    bot.speed_x = random.randint(-1, 1)
+    bot.speed_y = random.randint(-1, 1)
     bot.size = random.randint(10, 100)
     session.add(bot)
     session.commit()
@@ -235,9 +236,21 @@ while run:
     except BlockingIOError:
         pass
     # Спавн недостающих ботов
+    need_bots = bots - len(players)
+    if need_bots > 0:
+        for i in range(need_bots):
+            bot = Player(bot_name[i], None)
+            bot.color = random.choice(COLORS)
+            bot.x = random.randint(0, WIDTH_GAME)
+            bot.y = random.randint(0, HEIGHT_GAME)
+            bot.speed_x = random.randint(-1, 1)
+            bot.speed_y = random.randint(-1, 1)
+            bot.size = random.randint(10, 100)
+            session.add(bot)
+            session.commit()
+            local_bot = LocalPlayer(bot.id, bot.name, None, None, bot.color).load()
+            players[bot.id] = local_bot
 
-    if len(foods) > 0:
-        pass
     # Спавн недостающей еды
     need_food = food_count - len(foods)
     for i in range(need_food):
@@ -293,7 +306,7 @@ while run:
             dist_y = round(abs(player2.y - player1.y))
 
             if dist_x <= player1.x_vision//2+player2.size and dist_y <= player1.y_vision//2+player2.size:
-                data = f"{dist_x} {dist_y} {player2.size} {player2.color}"
+                data = f"{dist_x} {dist_y} {player2.size} {player2.color} {player1.name}"
                 visible_players[player1.id].append(data)
                 dist = math.sqrt(dist_x**2+dist_y**2)
 
@@ -305,7 +318,7 @@ while run:
                     player2.speed_y = 0
 
             if dist_x <= player2.x_vision//2+player1.size and dist_y <= player2.y_vision//2+player1.size:
-                data = f"{-dist_x} {-dist_y} {player1.size} {player1.color}"
+                data = f"{-dist_x} {-dist_y} {player1.size} {player1.color} {player1.name}"
                 visible_players[player2.id].append(data)
                 dist = math.sqrt(dist_x ** 2 + dist_y ** 2)
 
